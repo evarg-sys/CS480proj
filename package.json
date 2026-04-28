@@ -1,0 +1,14 @@
+{
+  "name": "cs480proj-workspace",
+  "private": true,
+  "scripts": {
+    "backend:start": "npm --prefix BACKEND run start",
+    "backend:dev": "npm --prefix BACKEND run dev",
+    "backend:cli": "npm --prefix BACKEND run cli",
+    "backend:db:init": "npm --prefix BACKEND run db:init",
+    "start": "npm --prefix BACKEND run start",
+    "dev": "npm --prefix BACKEND run dev",
+    "cli": "npm --prefix BACKEND run cli",
+    "db:init": "npm --prefix BACKEND run db:init"
+  }
+}
