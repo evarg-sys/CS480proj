@@ -1,0 +1,116 @@
+body {
+    margin: 0;
+    font-family: Arial;
+    background: red;
+  
+    /* center everything */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+  
+  /* Center text */
+  .center-text {
+    text-align: center;
+    color: white;
+  }
+  
+  /* Title */
+  .center-text h1 {
+    font-size: 40px;
+  }
+  
+  /* Menu icon top right */
+  .menu-icon {
+    font-size: 30px;
+    cursor: pointer;
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    color: white;
+  }
+  
+  /* Dropdown */
+  .dropdown {
+    position: absolute;
+    top: 60px;
+    right: 20px;
+    background: white;
+    color: black;
+    width: 120px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+  }
+  
+  .dropdown p {
+    margin: 0;
+    padding: 10px;
+    cursor: pointer;
+  }
+  
+  .dropdown p:hover {
+    background: #eee;
+  }
+  
+  .hidden {
+    display: none;
+  }
+
+  /* manager 
+  /* Split screen layout */
+.split-container {
+    display: flex;
+    height: 100vh;
+  }
+  
+  /* Left and right panels */
+  .left, .right {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 50px;
+  }
+  
+  /* Different colors for clarity */
+  .left {
+    background: #f1f1f1;
+  }
+  
+  .right {
+    background: #2c3e50;
+    color: white;
+  }
+  
+  /* Inputs */
+  input {
+    margin: 0px 0;
+    padding: 10px;
+    width: 250px;
+  }
+  
+  /* Buttons */
+  button {
+    padding: 10px;
+    width: 120px;
+    cursor: pointer;
+    margin-top: 10px;
+  }
+  label {
+    margin-top: 10px;
+    font-weight: bold;
+  }
+  .manager-container {
+    display: flex;
+    gap: 30px;
+    padding: 20px;
+  }
+  
+  .card {
+    background: white;
+    padding: 20px;
+    width: 300px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+  }

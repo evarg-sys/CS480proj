@@ -1,0 +1,44 @@
+<h1>Manager Dashboard</h1>
+
+<div class="manager-container">
+
+  <!-- HOTELS -->
+  <div class="card">
+    <h2>Hotels</h2>
+
+    <h3>Add Hotel</h3>
+    <input id="hotelName" placeholder="Hotel Name">
+    <input id="hotelCity" placeholder="City">
+    <button onclick="addHotel()">Add</button>
+
+    <h3>Update Hotel</h3>
+    <input id="updateHotelId" placeholder="Hotel ID">
+    <input id="updateHotelName" placeholder="New Name">
+    <button onclick="updateHotel()">Update</button>
+
+    <h3>Delete Hotel</h3>
+    <input id="deleteHotelId" placeholder="Hotel ID">
+    <button onclick="deleteHotel()">Delete</button>
+  </div>
+
+  <!-- ROOMS -->
+  <div class="card">
+    <h2>Rooms</h2>
+
+    <h3>Add Room</h3>
+    <input id="roomHotelId" placeholder="Hotel ID">
+    <input id="roomNumber" placeholder="Room Number">
+    <input id="price" placeholder="Price">
+    <button onclick="addRoom()">Add</button>
+
+    <h3>Update Room</h3>
+    <input id="updateRoomId" placeholder="Room ID">
+    <input id="newPrice" placeholder="New Price">
+    <button onclick="updateRoom()">Update</button>
+
+    <h3>Delete Room</h3>
+    <input id="deleteRoomId" placeholder="Room ID">
+    <button onclick="deleteRoom()">Delete</button>
+  </div>
+
+</div>
