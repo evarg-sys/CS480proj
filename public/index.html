@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HotelMgr — Hotel Management System</title>
+    <link rel="stylesheet" href="/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  </head>
+  <body>
+
+    <!-- ═══════════════════════════════════════════
+         LANDING / AUTH PAGE
+    ═══════════════════════════════════════════ -->
+    <section id="landingSection" class="auth-shell visible">
+
+      <!-- Left decorative panel -->
+      <div class="auth-left">
+        <div class="auth-brand">
+          <div class="auth-logo-mark">🏨</div>
+          <h1 class="auth-brand-name">HotelMgr</h1>
+          <p class="auth-brand-tagline">The complete hotel management platform</p>
+        </div>
+
+        <div class="auth-float-cards">
+          <div class="auth-float-card" style="--fi:0">
+            <span class="afc-icon">🏨</span>
+            <div>
+              <strong>Grand Palace</strong>
+              <small>4.8 ★ · 32 rooms available</small>
+            </div>
+          </div>
+          <div class="auth-float-card" style="--fi:1">
+            <span class="afc-icon">📅</span>
+            <div>
+              <strong>12 bookings today</strong>
+              <small>↑ 15% from yesterday</small>
+            </div>
+          </div>
+          <div class="auth-float-card" style="--fi:2">
+            <span class="afc-icon">⭐</span>
+            <div>
+              <strong>Ocean View Suite</strong>
+              <small>Top rated this month</small>
+            </div>
+          </div>
+        </div>
+
+        <div class="auth-bg-orbs">
+          <div class="orb orb-1"></div>
+          <div class="orb orb-2"></div>
+          <div class="orb orb-3"></div>
+        </div>
+      </div>
+
+      <!-- Right auth panel -->
+      <div class="auth-right">
+        <div class="auth-card">
+
+          <!-- Manager / Client portal switcher -->
+          <div class="auth-portal-tabs">
+            <button class="auth-portal-btn active" id="portalBtnManager" onclick="authShowMode('manager')">
+              <span>🔑</span> Manager
+            </button>
+            <button class="auth-portal-btn" id="portalBtnClient" onclick="authShowMode('client')">
+              <span>🧳</span> Guest
+            </button>
+          </div>
+
+          <!-- ── MANAGER AUTH ── -->
+          <div id="authManager" class="auth-mode active">
+            <div class="auth-sub-tabs">
+              <button class="auth-sub-tab active" id="mgrSubLogin" onclick="authSubTab('manager','login')">Sign In</button>
+              <button class="auth-sub-tab" id="mgrSubRegister" onclick="authSubTab('manager','register')">Register</button>
+            </div>
+
+            <!-- Manager login -->
+            <div id="authManagerLogin" class="auth-sub active">
+              <div class="auth-sub-header">
+                <h2>Manager Sign In</h2>
+                <p>Enter your SSN to access the dashboard</p>
+              </div>
+              <form class="auth-form" onsubmit="loginManager(event)">
+                <label class="auth-label">
+                  SSN
+                  <input id="managerLoginSSN" class="auth-input" placeholder="123456789" maxlength="9" required />
+                </label>
+                <button type="submit" class="auth-submit-btn">Sign In →</button>
+              </form>
+            </div>
+
+            <!-- Manager register -->
+            <div id="authManagerRegister" class="auth-sub">
+              <div class="auth-sub-header">
+                <h2>Create Manager Account</h2>
+                <p>All fields are required</p>
+              </div>
+              <form class="auth-form" onsubmit="registerManager(event)">
+                <label class="auth-label">
+                  Full Name
+                  <input id="managerRegisterName" class="auth-input" placeholder="Avery Brooks" required />
+                </label>
+                <label class="auth-label">
+                  SSN
+                  <input id="managerRegisterSSN" class="auth-input" placeholder="123456789" maxlength="9" required />
+                </label>
+                <label class="auth-label">
+                  Email
+                  <input id="managerRegisterEmail" class="auth-input" type="email" placeholder="manager@hotel.com" required />
+                </label>
+                <button type="submit" class="auth-submit-btn">Create Account →</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- ── CLIENT AUTH ── -->
+          <div id="authClient" class="auth-mode">
+            <div class="auth-sub-tabs">
+              <button class="auth-sub-tab active" id="cliSubLogin" onclick="authSubTab('client','login')">Sign In</button>
+              <button class="auth-sub-tab" id="cliSubRegister" onclick="authSubTab('client','register')">Register</button>
+            </div>
+
+            <!-- Client login -->
+            <div id="authClientLogin" class="auth-sub active">
+              <div class="auth-sub-header">
+                <h2>Guest Sign In</h2>
+                <p>Enter your email to continue</p>
+              </div>
+              <form class="auth-form" onsubmit="loginClient(event)">
+                <label class="auth-label">
+                  Email
+                  <input id="clientLoginEmail" class="auth-input" type="email" placeholder="guest@example.com" required />
+                </label>
+                <button type="submit" class="auth-submit-btn cli-btn">Sign In →</button>
+              </form>
+            </div>
+
+            <!-- Client register -->
+            <div id="authClientRegister" class="auth-sub">
+              <div class="auth-sub-header">
+                <h2>Create Guest Account</h2>
+                <p>Quick setup — takes under a minute</p>
+              </div>
+              <form class="auth-form auth-form-scroll" onsubmit="registerClient(event)">
+                <div class="auth-form-2col">
+                  <label class="auth-label">
+                    Full Name
+                    <input id="clientRegisterName" class="auth-input" placeholder="Jordan Lee" required />
+                  </label>
+                  <label class="auth-label">
+                    Email
+                    <input id="clientRegisterEmail" class="auth-input" type="email" placeholder="guest@example.com" required />
+                  </label>
+                  <label class="auth-label">
+                    Street Name
+                    <input id="clientAddressStreetName" class="auth-input" placeholder="Lakeshore Drive" required />
+                  </label>
+                  <label class="auth-label">
+                    Street Number
+                    <input id="clientAddressStreetNumber" class="auth-input" placeholder="221B" required />
+                  </label>
+                  <label class="auth-label">
+                    City
+                    <input id="clientAddressCity" class="auth-input" placeholder="Chicago" required />
+                  </label>
+                  <label class="auth-label">
+                    Credit Card #
+                    <input id="clientCardNumber" class="auth-input" placeholder="4111111111111111" required />
+                  </label>
+                  <label class="auth-label">
+                    Billing Street
+                    <input id="billingStreetName" class="auth-input" placeholder="Market Street" required />
+                  </label>
+                  <label class="auth-label">
+                    Billing #
+                    <input id="billingStreetNumber" class="auth-input" placeholder="120" required />
+                  </label>
+                  <label class="auth-label" style="grid-column:1/-1">
+                    Billing City
+                    <input id="billingCity" class="auth-input" placeholder="New York" required />
+                  </label>
+                </div>
+                <button type="submit" class="auth-submit-btn cli-btn">Create Account →</button>
+              </form>
+            </div>
+          </div>
+
+          <!-- Auth output (errors / messages) -->
+          <div id="authOutput" class="auth-output"></div>
+
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════
+         MANAGER DASHBOARD
+    ═══════════════════════════════════════════ -->
+    <section id="managerDashboardSection" class="mgr-shell hidden">
+
+      <nav class="mgr-sidebar">
+        <div class="mgr-logo">
+          <span class="mgr-logo-icon">🏨</span>
+          <span class="mgr-logo-text">HotelMgr</span>
+        </div>
+        <ul class="mgr-nav">
+          <li><button class="mgr-nav-btn active" onclick="mgrShowTab('overview')"><span class="nav-icon">📊</span> Overview</button></li>
+          <li><button class="mgr-nav-btn" onclick="mgrShowTab('hotels')"><span class="nav-icon">🏩</span> Hotels</button></li>
+          <li><button class="mgr-nav-btn" onclick="mgrShowTab('rooms')"><span class="nav-icon">🛏</span> Rooms</button></li>
+          <li><button class="mgr-nav-btn" onclick="mgrShowTab('clients')"><span class="nav-icon">👥</span> Clients</button></li>
+          <li><button class="mgr-nav-btn" onclick="mgrShowTab('reports')"><span class="nav-icon">📋</span> Reports</button></li>
+        </ul>
+        <div class="mgr-sidebar-footer">
+          <button class="mgr-nav-btn danger" onclick="logoutManager()"><span class="nav-icon">🚪</span> Logout</button>
+        </div>
+      </nav>
+
+      <div class="mgr-main">
+        <header class="mgr-topbar">
+          <div class="mgr-topbar-left">
+            <h2 class="mgr-welcome">Welcome back, <span id="mgrName">Manager</span>!</h2>
+            <p class="mgr-date" id="mgrDate"></p>
+          </div>
+          <div class="mgr-topbar-right">
+            <button class="mgr-action-btn" onclick="loadDashboardOverview()">↻ Refresh</button>
+          </div>
+        </header>
+
+        <!-- Tab: Overview -->
+        <div id="mgrTab-overview" class="mgr-tab active">
+          <div class="mgr-stat-row">
+            <div class="mgr-stat-card" style="--si:0">
+              <div class="mgr-stat-icon" style="background:#ede9fe; color:#6c5ce7;">🏨</div>
+              <div class="mgr-stat-body">
+                <span class="mgr-stat-label">Total Hotels</span>
+                <span class="mgr-stat-value" id="statHotels">—</span>
+              </div>
+            </div>
+            <div class="mgr-stat-card" style="--si:1">
+              <div class="mgr-stat-icon" style="background:#d1fae5; color:#059669;">🛏</div>
+              <div class="mgr-stat-body">
+                <span class="mgr-stat-label">Total Rooms</span>
+                <span class="mgr-stat-value" id="statRooms">—</span>
+              </div>
+            </div>
+            <div class="mgr-stat-card" style="--si:2">
+              <div class="mgr-stat-icon" style="background:#fef3c7; color:#d97706;">📅</div>
+              <div class="mgr-stat-body">
+                <span class="mgr-stat-label">Total Bookings</span>
+                <span class="mgr-stat-value" id="statBookings">—</span>
+              </div>
+            </div>
+            <div class="mgr-stat-card" style="--si:3">
+              <div class="mgr-stat-icon" style="background:#fee2e2; color:#dc2626;">👥</div>
+              <div class="mgr-stat-body">
+                <span class="mgr-stat-label">Top Client Bookings</span>
+                <span class="mgr-stat-value" id="statTopClient">—</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mgr-charts-row">
+            <div class="mgr-chart-card">
+              <div class="mgr-chart-header">
+                <h3>Bookings per Room</h3>
+                <span class="mgr-chart-badge">Room Activity</span>
+              </div>
+              <canvas id="chartRoomBookings" height="200"></canvas>
+            </div>
+            <div class="mgr-chart-card">
+              <div class="mgr-chart-header">
+                <h3>Hotel Stats</h3>
+                <span class="mgr-chart-badge">Per Hotel</span>
+              </div>
+              <canvas id="chartHotelStats" height="200"></canvas>
+            </div>
+          </div>
+
+          <div class="mgr-bottom-row">
+            <div class="mgr-perf-card">
+              <h3>Top Clients by Bookings</h3>
+              <div id="mgrTopClientsTable" class="mgr-table-wrap"></div>
+            </div>
+            <div class="mgr-perf-card">
+              <h3>Client Spending</h3>
+              <div id="mgrSpendingTable" class="mgr-table-wrap"></div>
+            </div>
+          </div>
+
+          <div class="mgr-output-card">
+            <div class="mgr-output-header">
+              <h3>API Output</h3>
+              <button class="mgr-action-btn" onclick="clearOutput()">Clear</button>
+            </div>
+            <div id="mgrOutput" class="output"></div>
+          </div>
+        </div>
+
+        <!-- Tab: Hotels -->
+        <div id="mgrTab-hotels" class="mgr-tab">
+          <h2 class="mgr-tab-title">Hotels</h2>
+          <div class="mgr-form-grid">
+            <div class="mgr-form-card" style="--fi:0">
+              <h3>Add Hotel</h3>
+              <form class="form-grid" onsubmit="addHotel(event)">
+                <label>Name <input id="addHotelName" placeholder="Grand Palace" required /></label>
+                <label>Manager SSN <input id="addHotelManagerSSN" placeholder="Uses logged-in manager if blank" /></label>
+                <label>Street Name <input id="addHotelStreetName" placeholder="Ocean Blvd" required /></label>
+                <label>Street Number <input id="addHotelStreetNumber" placeholder="100" required /></label>
+                <label>City <input id="addHotelCity" placeholder="Miami" required /></label>
+                <button type="submit">Add Hotel</button>
+              </form>
+            </div>
+            <div class="mgr-form-card" style="--fi:1">
+              <h3>Update Hotel</h3>
+              <form class="form-grid" onsubmit="updateHotel(event)">
+                <label>Hotel ID <input id="updateHotelId" type="number" placeholder="1" required /></label>
+                <label>New Name <input id="updateHotelName" placeholder="Optional" /></label>
+                <label>New Manager SSN <input id="updateHotelManagerSSN" placeholder="Optional" /></label>
+                <label>Street Name <input id="updateHotelStreetName" placeholder="Optional" /></label>
+                <label>Street Number <input id="updateHotelStreetNumber" placeholder="Optional" /></label>
+                <label>City <input id="updateHotelCity" placeholder="Optional" /></label>
+                <button type="submit">Update Hotel</button>
+              </form>
+            </div>
+            <div class="mgr-form-card" style="--fi:2">
+              <h3>Delete Hotel</h3>
+              <form class="form-grid" onsubmit="deleteHotel(event)">
+                <label>Hotel ID <input id="deleteHotelId" type="number" placeholder="1" required /></label>
+                <button type="submit" style="background:#dc2626;">Delete Hotel</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Rooms -->
+        <div id="mgrTab-rooms" class="mgr-tab">
+          <h2 class="mgr-tab-title">Rooms</h2>
+          <div class="mgr-form-grid">
+            <div class="mgr-form-card" style="--fi:0">
+              <h3>Add Room</h3>
+              <form class="form-grid" onsubmit="addRoom(event)">
+                <label>Hotel ID <input id="addRoomHotelId" type="number" placeholder="1" required /></label>
+                <label>Room Number <input id="addRoomNumber" type="number" placeholder="101" required /></label>
+                <label>Windows <input id="addRoomWindows" type="number" placeholder="2" /></label>
+                <label>Year Renovated <input id="addRoomRenovation" type="number" placeholder="2022" /></label>
+                <label>Access Type <input id="addRoomAccessType" placeholder="key card" /></label>
+                <button type="submit">Add Room</button>
+              </form>
+            </div>
+            <div class="mgr-form-card" style="--fi:1">
+              <h3>Update Room</h3>
+              <form class="form-grid" onsubmit="updateRoom(event)">
+                <label>Hotel ID <input id="updateRoomHotelId" type="number" placeholder="1" required /></label>
+                <label>Room Number <input id="updateRoomNumber" type="number" placeholder="101" required /></label>
+                <label>New Number <input id="updateRoomNewNumber" type="number" placeholder="Optional" /></label>
+                <label>Windows <input id="updateRoomWindows" type="number" placeholder="Optional" /></label>
+                <label>Year Renovated <input id="updateRoomRenovation" type="number" placeholder="Optional" /></label>
+                <label>Access Type <input id="updateRoomAccessType" placeholder="Optional" /></label>
+                <button type="submit">Update Room</button>
+              </form>
+            </div>
+            <div class="mgr-form-card" style="--fi:2">
+              <h3>Delete Room</h3>
+              <form class="form-grid" onsubmit="deleteRoom(event)">
+                <label>Hotel ID <input id="deleteRoomHotelId" type="number" placeholder="1" required /></label>
+                <label>Room Number <input id="deleteRoomNumber" type="number" placeholder="101" required /></label>
+                <button type="submit" style="background:#dc2626;">Delete Room</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Clients -->
+        <div id="mgrTab-clients" class="mgr-tab">
+          <h2 class="mgr-tab-title">Clients</h2>
+          <div class="mgr-form-grid">
+            <div class="mgr-form-card" style="--fi:0">
+              <h3>Delete Client</h3>
+              <form class="form-grid" onsubmit="deleteClient(event)">
+                <label>Client Email <input id="deleteClientId" placeholder="client@example.com" required /></label>
+                <button type="submit" style="background:#dc2626;">Delete Client</button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab: Reports -->
+        <div id="mgrTab-reports" class="mgr-tab">
+          <h2 class="mgr-tab-title">Reports</h2>
+          <div class="mgr-form-grid">
+            <div class="mgr-form-card" style="--fi:0">
+              <h3>Top-K Clients</h3>
+              <div class="inline-form">
+                <input id="topClientsK" type="number" placeholder="K (default 5)" />
+                <button type="button" onclick="runTopClientsReport()">Run</button>
+              </div>
+            </div>
+            <div class="mgr-form-card" style="--fi:1">
+              <h3>Room Booking Counts</h3>
+              <button type="button" onclick="runRoomBookingsReport()">Run Report</button>
+            </div>
+            <div class="mgr-form-card" style="--fi:2">
+              <h3>Hotel Stats</h3>
+              <button type="button" onclick="runHotelStatsReport()">Run Report</button>
+            </div>
+            <div class="mgr-form-card" style="--fi:3">
+              <h3>Clients by Cities</h3>
+              <div class="form-grid">
+                <label>City 1 <input id="clientsCity1" placeholder="Chicago" /></label>
+                <label>City 2 <input id="clientsCity2" placeholder="NewYork" /></label>
+                <button type="button" onclick="runClientsByCitiesReport()">Run Report</button>
+              </div>
+            </div>
+            <div class="mgr-form-card" style="--fi:4">
+              <h3>Problematic Hotels</h3>
+              <button type="button" onclick="runProblemHotelsReport()">Run Report</button>
+            </div>
+            <div class="mgr-form-card" style="--fi:5">
+              <h3>Client Spending</h3>
+              <button type="button" onclick="runClientSpendingReport()">Run Report</button>
+            </div>
+          </div>
+          <div class="mgr-output-card" style="margin-top:1.5rem;">
+            <div class="mgr-output-header">
+              <h3>Report Output</h3>
+              <button class="mgr-action-btn" onclick="clearOutput()">Clear</button>
+            </div>
+            <div id="reportOutput" class="output"></div>
+          </div>
+        </div>
+
+      </div><!-- /.mgr-main -->
+    </section>
+
+
+    <!-- ═══════════════════════════════════════════
+         CLIENT DASHBOARD
+    ═══════════════════════════════════════════ -->
+    <section id="clientDashboardSection" class="cli-shell hidden">
+
+      <nav class="cli-sidebar">
+        <div class="mgr-logo">
+          <span class="mgr-logo-icon">🏖️</span>
+          <span class="mgr-logo-text">GuestHub</span>
+        </div>
+        <ul class="mgr-nav">
+          <li><button class="cli-nav-btn active" onclick="cliShowTab('overview')"><span class="nav-icon">📊</span> Overview</button></li>
+          <li><button class="cli-nav-btn" onclick="cliShowTab('search')"><span class="nav-icon">🔍</span> Search Rooms</button></li>
+          <li><button class="cli-nav-btn" onclick="cliShowTab('book')"><span class="nav-icon">📅</span> Book Room</button></li>
+          <li><button class="cli-nav-btn" onclick="cliShowTab('bookings')"><span class="nav-icon">📋</span> My Bookings</button></li>
+          <li><button class="cli-nav-btn" onclick="cliShowTab('review')"><span class="nav-icon">⭐</span> Reviews</button></li>
+          <li><button class="cli-nav-btn" onclick="cliShowTab('profile')"><span class="nav-icon">👤</span> My Profile</button></li>
+        </ul>
+        <div class="mgr-sidebar-footer">
+          <button class="cli-nav-btn danger" onclick="logoutClient()"><span class="nav-icon">🚪</span> Logout</button>
+        </div>
+      </nav>
+
+      <div class="mgr-main">
+        <header class="mgr-topbar cli-topbar">
+          <div class="mgr-topbar-left">
+            <h2 class="mgr-welcome cli-welcome">Welcome, <span id="cliName">Guest</span>!</h2>
+            <p class="mgr-date" id="cliDate"></p>
+          </div>
+          <div class="mgr-topbar-right">
+            <button class="cli-action-btn" onclick="loadClientOverview()">↻ Refresh</button>
+          </div>
+        </header>
+
+        <!-- Tab: Overview -->
+        <div id="cliTab-overview" class="mgr-tab active">
+          <div class="mgr-stat-row">
+            <div class="mgr-stat-card cli-stat" style="--si:0">
+              <div class="mgr-stat-icon" style="background:#e0f2fe; color:#0284c7;">📋</div>
+              <div class="mgr-stat-body">
+                <span class="mgr-stat-label">My Bookings</span>
+                <span class="mgr-stat-value" id="cliStatBookings">—</span>
+              </div>
+            </div>
+            <div class="mgr-stat-card cli-stat" style="--si:1">
+              <div class="mgr-stat-icon" style="background:#dcfce7; color:#16a34a;">🏨</div>
+              <div class="mgr-stat-body">
+                <span class="mgr-stat-label">Hotels Available</span>
+                <span class="mgr-stat-value" id="cliStatHotels">—</span>
+              </div>
+            </div>
+            <div class="mgr-stat-card cli-stat" style="--si:2">
+              <div class="mgr-stat-icon" style="background:#fef9c3; color:#ca8a04;">💳</div>
+              <div class="mgr-stat-body">
+                <span class="mgr-stat-label">Total Spent</span>
+                <span class="mgr-stat-value" id="cliStatSpent">—</span>
+              </div>
+            </div>
+            <div class="mgr-stat-card cli-stat" style="--si:3">
+              <div class="mgr-stat-icon" style="background:#fce7f3; color:#db2777;">⭐</div>
+              <div class="mgr-stat-body">
+                <span class="mgr-stat-label">Reviews Given</span>
+                <span class="mgr-stat-value" id="cliStatReviews">—</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick action cards -->
+          <div class="cli-quick-row">
+            <div class="cli-quick-card" style="--fi:0" onclick="cliShowTab('search')">
+              <div class="cli-quick-icon">🔍</div>
+              <span>Search Rooms</span>
+            </div>
+            <div class="cli-quick-card" style="--fi:1" onclick="cliShowTab('book')">
+              <div class="cli-quick-icon">📅</div>
+              <span>Book a Room</span>
+            </div>
+            <div class="cli-quick-card" style="--fi:2" onclick="cliShowTab('bookings')">
+              <div class="cli-quick-icon">📋</div>
+              <span>View Bookings</span>
+            </div>
+            <div class="cli-quick-card" style="--fi:3" onclick="cliShowTab('review')">
+              <div class="cli-quick-icon">⭐</div>
+              <span>Leave a Review</span>
+            </div>
+          </div>
+
+          <!-- Recent bookings preview -->
+          <div class="mgr-perf-card" style="margin-bottom:1.5rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+              <h3 style="margin:0; font-size:0.95rem; color:var(--mgr-ink)">Recent Bookings</h3>
+              <button class="cli-action-btn" onclick="viewMyBookings()">Load All</button>
+            </div>
+            <div id="cliBookingsPreview" class="mgr-table-wrap">
+              <p style="color:var(--mgr-muted); font-size:0.9rem;">Click "Load All" to fetch your bookings.</p>
+            </div>
+          </div>
+
+          <div class="mgr-output-card">
+            <div class="mgr-output-header">
+              <h3>API Output</h3>
+              <button class="cli-action-btn" onclick="clearOutput()">Clear</button>
+            </div>
+            <div id="cliOutput" class="output"></div>
+          </div>
+        </div>
+
+        <!-- Tab: Search Rooms -->
+        <div id="cliTab-search" class="mgr-tab">
+          <h2 class="mgr-tab-title">Search Available Rooms</h2>
+          <div class="mgr-form-grid">
+            <div class="mgr-form-card cli-form-card" style="--fi:0">
+              <h3>Find Available Rooms</h3>
+              <form class="form-grid" onsubmit="searchAvailableRooms(event)">
+                <label>Check-in Date <input id="searchStartDate" type="date" required /></label>
+                <label>Check-out Date <input id="searchEndDate" type="date" required /></label>
+                <label>Hotel ID (optional) <input id="searchHotelId" type="number" placeholder="Leave blank for all hotels" /></label>
+                <button type="submit">Search Rooms</button>
+              </form>
+            </div>
+          </div>
+          <div class="mgr-output-card" style="margin-top:1.5rem;">
+            <div class="mgr-output-header">
+              <h3>Search Results</h3>
+              <button class="cli-action-btn" onclick="clearOutput()">Clear</button>
+            </div>
+            <div id="searchOutput" class="output"></div>
+          </div>
+        </div>
+
+        <!-- Tab: Book Room -->
+        <div id="cliTab-book" class="mgr-tab">
+          <h2 class="mgr-tab-title">Book a Room</h2>
+          <div class="mgr-form-grid">
+            <div class="mgr-form-card cli-form-card" style="--fi:0">
+              <h3>Book Specific Room</h3>
+              <form class="form-grid" onsubmit="bookRoom(event)">
+                <label>Hotel ID <input id="bookHotelId" type="number" placeholder="1" required /></label>
+                <label>Room Number <input id="bookRoomNumber" type="number" placeholder="101" required /></label>
+                <label>Check-in Date <input id="bookStartDate" type="date" required /></label>
+                <label>Check-out Date <input id="bookEndDate" type="date" required /></label>
+                <label>Price per Day ($) <input id="bookPricePerDay" type="number" step="0.01" placeholder="150.00" required /></label>
+                <button type="submit">Book Room</button>
+              </form>
+            </div>
+            <div class="mgr-form-card cli-form-card" style="--fi:1">
+              <h3>Auto-Book Best Room</h3>
+              <p style="color:var(--mgr-muted); font-size:0.88rem; margin-bottom:1rem;">We'll find the best available room at your preferred hotel, or suggest alternatives.</p>
+              <form class="form-grid" onsubmit="autoBookRoom(event)">
+                <label>Preferred Hotel ID <input id="autoBookHotelId" type="number" placeholder="1" required /></label>
+                <label>Check-in Date <input id="autoBookStartDate" type="date" required /></label>
+                <label>Check-out Date <input id="autoBookEndDate" type="date" required /></label>
+                <label>Price per Day ($) <input id="autoBookPricePerDay" type="number" step="0.01" placeholder="150.00" required /></label>
+                <button type="submit">Auto-Book</button>
+              </form>
+            </div>
+          </div>
+          <div class="mgr-output-card" style="margin-top:1.5rem;">
+            <div class="mgr-output-header">
+              <h3>Booking Output</h3>
+              <button class="cli-action-btn" onclick="clearOutput()">Clear</button>
+            </div>
+            <div id="bookOutput" class="output"></div>
+          </div>
+        </div>
+
+        <!-- Tab: My Bookings -->
+        <div id="cliTab-bookings" class="mgr-tab">
+          <h2 class="mgr-tab-title">My Bookings</h2>
+          <div style="margin-bottom:1.5rem;">
+            <button class="cli-action-btn" style="padding:0.75rem 1.5rem; font-size:0.95rem;" onclick="viewMyBookings()">Load My Bookings</button>
+          </div>
+          <div class="mgr-output-card">
+            <div class="mgr-output-header">
+              <h3>Bookings</h3>
+              <button class="cli-action-btn" onclick="clearOutput()">Clear</button>
+            </div>
+            <div id="bookingsOutput" class="output"></div>
+          </div>
+        </div>
+
+        <!-- Tab: Reviews -->
+        <div id="cliTab-review" class="mgr-tab">
+          <h2 class="mgr-tab-title">Submit a Review</h2>
+          <div class="mgr-form-grid">
+            <div class="mgr-form-card cli-form-card" style="--fi:0">
+              <h3>Leave a Review</h3>
+              <p style="color:var(--mgr-muted); font-size:0.88rem; margin-bottom:1rem;">You must have a booking at the hotel to leave a review.</p>
+              <form class="form-grid" onsubmit="submitReview(event)">
+                <label>Hotel ID <input id="reviewHotelId" type="number" placeholder="1" required /></label>
+                <label>Rating (1–5) <input id="reviewRating" type="number" min="1" max="5" placeholder="5" required /></label>
+                <label>Message <textarea id="reviewMessage" placeholder="Share your experience..."></textarea></label>
+                <button type="submit">Submit Review</button>
+              </form>
+            </div>
+          </div>
+          <div class="mgr-output-card" style="margin-top:1.5rem;">
+            <div class="mgr-output-header">
+              <h3>Review Output</h3>
+              <button class="cli-action-btn" onclick="clearOutput()">Clear</button>
+            </div>
+            <div id="reviewOutput" class="output"></div>
+          </div>
+        </div>
+
+        <!-- Tab: Profile -->
+        <div id="cliTab-profile" class="mgr-tab">
+          <h2 class="mgr-tab-title">My Profile</h2>
+          <div class="mgr-form-grid">
+            <div class="mgr-form-card cli-form-card" style="grid-column:1/-1; --fi:0">
+              <h3>Update Profile</h3>
+              <div class="auth-form-2col">
+                <label class="auth-label">New Name <input id="updateClientName" class="auth-input" placeholder="Optional" /></label>
+                <label class="auth-label">New Credit Card # <input id="updateClientCardNumber" class="auth-input" placeholder="Optional" /></label>
+                <label class="auth-label">New Street Name <input id="updateClientStreetName" class="auth-input" placeholder="Optional" /></label>
+                <label class="auth-label">New Street Number <input id="updateClientStreetNumber" class="auth-input" placeholder="Optional" /></label>
+                <label class="auth-label">New City <input id="updateClientCity" class="auth-input" placeholder="Optional" /></label>
+                <label class="auth-label">Billing Street Name <input id="updateBillingStreetName" class="auth-input" placeholder="Optional" /></label>
+                <label class="auth-label">Billing Street Number <input id="updateBillingStreetNumber" class="auth-input" placeholder="Optional" /></label>
+                <label class="auth-label">Billing City <input id="updateBillingCity" class="auth-input" placeholder="Optional" /></label>
+              </div>
+              <button type="button" onclick="updateClientProfile()" style="margin-top:1rem;">Save Changes</button>
+            </div>
+          </div>
+          <div class="mgr-output-card" style="margin-top:1.5rem;">
+            <div class="mgr-output-header">
+              <h3>Output</h3>
+              <button class="cli-action-btn" onclick="clearOutput()">Clear</button>
+            </div>
+            <div id="profileOutput" class="output"></div>
+          </div>
+        </div>
+
+      </div><!-- /.mgr-main -->
+    </section>
+
+    <script src="/app.js"></script>
+  </body>
+</html>
