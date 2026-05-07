@@ -631,6 +631,8 @@ function cliShowTab(tabName) {
   document.querySelectorAll("#clientDashboardSection .mgr-tab").forEach((t) => t.classList.remove("active"));
   const target = document.getElementById(`cliTab-${tabName}`);
   if (target) target.classList.add("active");
+
+  if (tabName === "review") loadMyReviews();
 }
 
 async function loadClientOverview() {
@@ -768,9 +770,48 @@ async function submitReview(event) {
   });
 
   if (payload?.success) {
-    incrementClientReviewCount(clientId);
+    loadMyReviews();
     loadClientOverview();
   }
+}
+
+async function loadMyReviews() {
+  const clientId = ensureClientSession();
+  if (!clientId) return;
+
+  const payload = await fetch(`/api/reviews?clientId=${encodeURIComponent(clientId)}`)
+    .then((r) => r.json())
+    .catch(() => null);
+
+  const reviews = Array.isArray(payload?.data) ? payload.data : [];
+
+  // Update stat badge with real DB count
+  const statEl = document.getElementById("cliStatReviews");
+  if (statEl) statEl.textContent = String(reviews.length);
+
+  const countEl = document.getElementById("myReviewsCount");
+  if (countEl) countEl.textContent = String(reviews.length);
+
+  // Sync localStorage count
+  const key = `clientReviewCount:${clientId}`;
+  localStorage.setItem(key, String(reviews.length));
+
+  const listEl = document.getElementById("myReviewsList");
+  if (!listEl) return;
+
+  if (reviews.length === 0) {
+    listEl.innerHTML = "<p style='color:var(--mgr-muted);font-size:0.9rem'>You haven't left any reviews yet.</p>";
+    return;
+  }
+
+  listEl.innerHTML = createTable(
+    reviews.map((r) => ({
+      "Review ID":  r.review_id,
+      "Hotel":      r.hotel_name ? `${r.hotel_name} (#${r.hotel_id})` : `#${r.hotel_id}`,
+      "Rating":     `${r.rating} / 5`,
+      "Message":    r.message || "—",
+    }))
+  );
 }
 
 async function updateClientProfile() {
@@ -855,5 +896,6 @@ window.autoBookRoom          = autoBookRoom;
 window.viewMyBookings        = viewMyBookings;
 window.cancelBooking         = cancelBooking;
 window.submitReview          = submitReview;
+window.loadMyReviews         = loadMyReviews;
 window.updateClient          = updateClient;
 window.updateClientProfile   = updateClientProfile;

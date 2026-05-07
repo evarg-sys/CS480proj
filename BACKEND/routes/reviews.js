@@ -24,14 +24,13 @@ router.post("/", async (req, res) => {
         FROM Booking
         WHERE client_email = $1
           AND hotel_id = $2
-          AND end_date < CURRENT_DATE
         LIMIT 1
       `,
       [clientId, hotelId]
     );
 
     if (bookingCheck.rows.length === 0) {
-      return sendError(res, 403, "A client can review a hotel only after previously staying there");
+      return sendError(res, 403, "A client can review a hotel only after booking there");
     }
 
     const result = await pool.query(
@@ -46,6 +45,31 @@ router.post("/", async (req, res) => {
     return sendSuccess(res, 201, "Review submitted successfully", result.rows[0]);
   } catch (error) {
     return handleDatabaseError(res, error, "Failed to submit review");
+  }
+});
+
+// GET /api/reviews?clientId=<email>  — returns all reviews left by a specific client
+router.get("/", async (req, res) => {
+  try {
+    const clientId = getClientEmail(req.query.clientId || req.query.clientEmail);
+    if (!clientId) {
+      return sendError(res, 400, "clientId is required");
+    }
+
+    const result = await pool.query(
+      `
+        SELECT r.review_id, r.rating, r.message, r.hotel_id, h.hotel_name
+        FROM Review r
+        LEFT JOIN Hotel h ON h.hotel_id = r.hotel_id
+        WHERE r.client_email = $1
+        ORDER BY r.review_id DESC
+      `,
+      [clientId]
+    );
+
+    return sendSuccess(res, 200, "Reviews fetched successfully", result.rows);
+  } catch (error) {
+    return handleDatabaseError(res, error, "Failed to fetch reviews");
   }
 });
 

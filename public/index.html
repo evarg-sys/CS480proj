@@ -639,6 +639,17 @@
             </div>
             <div id="reviewOutput" class="output"></div>
           </div>
+
+          <!-- My past reviews -->
+          <div class="mgr-output-card" style="margin-top:1.5rem;">
+            <div class="mgr-output-header">
+              <h3>My Reviews (<span id="myReviewsCount">0</span>)</h3>
+              <button class="cli-action-btn" onclick="loadMyReviews()">Refresh</button>
+            </div>
+            <div id="myReviewsList" class="output">
+              <p style="color:var(--mgr-muted);font-size:0.9rem">Loading…</p>
+            </div>
+          </div>
         </div>
 
         <!-- Tab: Profile -->
