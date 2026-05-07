@@ -25,7 +25,8 @@ CREATE TABLE Room (
     hotel_id INT NOT NULL REFERENCES Hotel(hotel_id) ON DELETE CASCADE,
     num_windows INT,
     year_of_last_renovation INT,
-    acces_type VARCHAR(50),
+    acces_type VARCHAR(20) NOT NULL DEFAULT 'stairs' CHECK (acces_type IN ('elevator', 'stairs')),
+    price_per_night NUMERIC(10, 2) NOT NULL DEFAULT 100.00,
     PRIMARY KEY (room_number, hotel_id)
 );
 

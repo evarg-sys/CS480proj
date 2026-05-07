@@ -715,6 +715,103 @@ button, input, textarea, select { font: inherit; }
   gap: 1rem;
 }
 
+.mgr-my-hotels-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.mgr-hotel-card {
+  background: #fff;
+  border: 1px solid var(--mgr-border);
+  border-radius: 16px;
+  padding: 1.1rem 1.15rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.mgr-hotel-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.mgr-hotel-card-head h3 {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--mgr-ink);
+}
+
+.mgr-hotel-chip {
+  background: var(--mgr-purple-light);
+  color: var(--mgr-purple-dark);
+  border-radius: 999px;
+  padding: 0.25rem 0.7rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.mgr-hotel-address {
+  margin: 0.45rem 0 0.9rem;
+  color: var(--mgr-muted);
+  font-size: 0.86rem;
+}
+
+.mgr-room-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.mgr-room-item {
+  border: 1px solid var(--mgr-border);
+  border-radius: 12px;
+  background: #fafaff;
+  padding: 0.75rem;
+}
+
+.mgr-room-item h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.92rem;
+}
+
+.mgr-room-item p {
+  margin: 0.22rem 0;
+  font-size: 0.82rem;
+  color: var(--mgr-muted);
+}
+
+.booking-pill {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.booking-pill.available {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.booking-pill.booked {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+.mgr-empty-state {
+  margin: 0;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px dashed var(--mgr-border);
+  background: #fff;
+  color: var(--mgr-muted);
+  font-size: 0.9rem;
+}
+
 .mgr-form-card,
 .cli-form-card {
   background: #fff;
@@ -871,6 +968,52 @@ button, input, textarea, select { font: inherit; }
   border-radius: 12px;
   border: 1px solid var(--mgr-border);
   background: #fff;
+  font-size: 0.88rem;
+}
+
+.report-summary-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.report-count-badge {
+  background: #ede9fe;
+  color: #4c3dc4;
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-size: 0.77rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.report-table-wrap {
+  border: 1px solid var(--mgr-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fff;
+}
+
+.report-table th {
+  background: #f1effb;
+  color: #5b5588;
+  text-transform: none;
+  font-size: 0.8rem;
+}
+
+.report-table tbody tr:nth-child(even) {
+  background: #fbfbff;
+}
+
+.report-table tbody tr:hover {
+  background: #f5f3ff;
+}
+
+.report-empty {
+  margin: 0;
+  color: #6f6a96;
   font-size: 0.88rem;
 }
 

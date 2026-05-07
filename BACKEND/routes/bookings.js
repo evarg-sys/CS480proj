@@ -19,13 +19,13 @@ router.post("/", async (req, res) => {
 
   try {
     const clientId = getClientEmail(req.body.clientId || req.body.clientEmail);
-    const { hotelId, roomNumber, startDate, endDate, pricePerDay } = req.body;
+    const { hotelId, roomNumber, startDate, endDate } = req.body;
 
-    if (!clientId || !hotelId || roomNumber === undefined || pricePerDay === undefined) {
+    if (!clientId || !hotelId || roomNumber === undefined) {
       return sendError(
         res,
         400,
-        "clientId, hotelId, roomNumber, startDate, endDate, and pricePerDay are required"
+        "clientId, hotelId, roomNumber, startDate, and endDate are required"
       );
     }
 
@@ -37,7 +37,7 @@ router.post("/", async (req, res) => {
 
     const roomResult = await client.query(
       `
-        SELECT hotel_id, room_number
+        SELECT hotel_id, room_number, price_per_night
         FROM Room
         WHERE hotel_id = $1
           AND room_number = $2
@@ -53,7 +53,17 @@ router.post("/", async (req, res) => {
     const conflict = await getRoomConflict(client, hotelId, roomNumber, startDate, endDate);
     if (conflict) {
       await client.query("ROLLBACK");
-      return sendError(res, 409, "Room is not available for the requested dates");
+      return sendError(
+        res,
+        409,
+        "Room is not available for the selected date interval",
+        {
+          bookingId: conflict.booking_id,
+          bookedBy: conflict.client_email,
+          startDate: conflict.start_date,
+          endDate: conflict.end_date,
+        }
+      );
     }
 
     const bookingResult = await client.query(
@@ -62,7 +72,7 @@ router.post("/", async (req, res) => {
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING booking_id, start_date, end_date, price_per_day, client_email, room_number, hotel_id
       `,
-      [startDate, endDate, pricePerDay, clientId, roomNumber, hotelId]
+      [startDate, endDate, roomResult.rows[0].price_per_night, clientId, roomNumber, hotelId]
     );
 
     await client.query("COMMIT");
@@ -80,10 +90,10 @@ router.post("/auto", async (req, res) => {
 
   try {
     const clientId = getClientEmail(req.body.clientId || req.body.clientEmail);
-    const { hotelId, startDate, endDate, pricePerDay } = req.body;
+    const { hotelId, startDate, endDate } = req.body;
 
-    if (!clientId || !hotelId || pricePerDay === undefined) {
-      return sendError(res, 400, "clientId, hotelId, startDate, endDate, and pricePerDay are required");
+    if (!clientId || !hotelId) {
+      return sendError(res, 400, "clientId, hotelId, startDate, and endDate are required");
     }
 
     if (!isValidDateRange(startDate, endDate)) {
@@ -105,7 +115,7 @@ router.post("/auto", async (req, res) => {
         VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING booking_id, start_date, end_date, price_per_day, client_email, room_number, hotel_id
       `,
-      [startDate, endDate, pricePerDay, clientId, availableRoom.room_number, hotelId]
+      [startDate, endDate, availableRoom.price_per_night, clientId, availableRoom.room_number, hotelId]
     );
 
     await client.query("COMMIT");
@@ -115,6 +125,46 @@ router.post("/auto", async (req, res) => {
     return handleDatabaseError(res, error, "Failed to auto-book room");
   } finally {
     client.release();
+  }
+});
+
+router.delete("/:bookingId", async (req, res) => {
+  try {
+    const { bookingId } = req.params;
+    const clientId = getClientEmail(req.body.clientId || req.body.clientEmail || req.query.clientId || req.query.clientEmail);
+
+    if (!bookingId || !clientId) {
+      return sendError(res, 400, "bookingId and clientId are required");
+    }
+
+    const ownerCheck = await pool.query(
+      `
+        SELECT booking_id, client_email
+        FROM Booking
+        WHERE booking_id = $1
+      `,
+      [bookingId]
+    );
+
+    if (ownerCheck.rows.length === 0) {
+      return sendError(res, 404, "Booking not found");
+    }
+
+    if (ownerCheck.rows[0].client_email !== clientId) {
+      return sendError(res, 403, "Only the client who made this booking can cancel it");
+    }
+
+    await pool.query(
+      `
+        DELETE FROM Booking
+        WHERE booking_id = $1
+      `,
+      [bookingId]
+    );
+
+    return sendSuccess(res, 200, "Booking canceled successfully", { bookingId: Number(bookingId) });
+  } catch (error) {
+    return handleDatabaseError(res, error, "Failed to cancel booking");
   }
 });
 

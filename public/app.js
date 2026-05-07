@@ -69,6 +69,15 @@ function getManagerSSN()  { return localStorage.getItem("managerSSN")  || ""; }
 function getClientId()    { return localStorage.getItem("clientId")    || ""; }
 function getManagerName() { return localStorage.getItem("managerName") || "Manager"; }
 function getClientName()  { return localStorage.getItem("clientName")  || "Guest"; }
+function getClientReviewCount(clientId) {
+  const key = `clientReviewCount:${clientId}`;
+  return Number.parseInt(localStorage.getItem(key) || "0", 10) || 0;
+}
+function incrementClientReviewCount(clientId) {
+  const key = `clientReviewCount:${clientId}`;
+  const current = Number.parseInt(localStorage.getItem(key) || "0", 10) || 0;
+  localStorage.setItem(key, String(current + 1));
+}
 
 function clearOutput() {
   ["mgrOutput", "reportOutput", "cliOutput", "searchOutput",
@@ -94,10 +103,69 @@ function createTable(rows) {
   return `<table class="output-table"><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table>`;
 }
 
+function formatColumnLabel(column) {
+  return String(column)
+    .replace(/_/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .replace(/\b\w/g, (m) => m.toUpperCase());
+}
+
+function createReportTable(rows) {
+  if (!Array.isArray(rows) || rows.length === 0) return "<p class='report-empty'>No rows returned for this report.</p>";
+
+  const cols = Array.from(rows.reduce((s, r) => {
+    Object.keys(r || {}).forEach((k) => s.add(k));
+    return s;
+  }, new Set()));
+
+  const header = cols.map((c) => `<th>${formatColumnLabel(c)}</th>`).join("");
+  const body = rows
+    .map((r) => `<tr>${cols.map((c) => `<td>${formatCell(r[c])}</td>`).join("")}</tr>`)
+    .join("");
+
+  return `<div class="report-table-wrap"><table class="output-table report-table"><thead><tr>${header}</tr></thead><tbody>${body}</tbody></table></div>`;
+}
+
+function renderReportContent(payload, isError = false) {
+  const message = payload?.message || (isError ? "Request failed" : "Request completed");
+  const data = payload?.data;
+
+  let content = `<div class="report-summary-row"><div class="output-message ${isError ? "error" : ""}">${message}</div>`;
+  if (Array.isArray(data)) {
+    content += `<span class="report-count-badge">${data.length} rows</span>`;
+  }
+  content += "</div>";
+
+  if (Array.isArray(data)) {
+    content += createReportTable(data);
+  } else if (data && typeof data === "object") {
+    content += createCard(data);
+  } else if (typeof data !== "undefined") {
+    content += `<p>${formatCell(data)}</p>`;
+  }
+
+  if (payload?.error && typeof payload.error === "string") {
+    content += `<pre style="font-size:0.78rem">${payload.error}</pre>`;
+  }
+
+  return content;
+}
+
 function createCard(data) {
   if (!data || typeof data !== "object") return `<p>${formatCell(data)}</p>`;
   const content = Object.entries(data).map(([k, v]) => `<p style="margin:0.3rem 0"><strong>${k}:</strong> ${formatCell(v)}</p>`).join("");
   return `<div class="output-card">${content}</div>`;
+}
+
+function isReportsTabActive() {
+  return document.getElementById("mgrTab-reports")?.classList.contains("active");
+}
+
+function focusReportOutput() {
+  const outputEl = document.getElementById("reportOutput");
+  if (!outputEl) return;
+  outputEl.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 // Writes output to the active output element(s)
@@ -133,10 +201,13 @@ function renderOutput(payload, isError = false) {
     const el = document.getElementById("authOutput");
     if (el) el.innerHTML = content;
   } else if (onManager) {
-    ["mgrOutput", "reportOutput"].forEach((id) => {
-      const el = document.getElementById(id);
-      if (el) el.innerHTML = content;
-    });
+    if (isReportsTabActive()) {
+      const el = document.getElementById("reportOutput");
+      if (el) el.innerHTML = renderReportContent(payload, isError);
+    } else {
+      const mgrOut = document.getElementById("mgrOutput");
+      if (mgrOut) mgrOut.innerHTML = content;
+    }
   } else if (onClient) {
     ["cliOutput", "searchOutput", "bookOutput", "bookingsOutput", "reviewOutput", "profileOutput"].forEach((id) => {
       const el = document.getElementById(id);
@@ -276,6 +347,71 @@ function mgrShowTab(tabName) {
   document.querySelectorAll("#managerDashboardSection .mgr-tab").forEach((t) => t.classList.remove("active"));
   const target = document.getElementById(`mgrTab-${tabName}`);
   if (target) target.classList.add("active");
+
+  if (tabName === "my-hotels") {
+    loadMyHotelsView();
+  }
+}
+
+function createMyHotelsMarkup(hotels) {
+  if (!hotels.length) {
+    return "<p class='mgr-empty-state'>No hotels are currently assigned to your manager account.</p>";
+  }
+
+  return hotels.map((hotel) => {
+    const hotelRooms = Array.isArray(hotel.rooms) ? hotel.rooms : [];
+
+    const roomsMarkup = hotelRooms.length
+      ? `<div class="mgr-room-grid">${hotelRooms.map((room) => `
+          <article class="mgr-room-item">
+            <h4>Room ${room.room_number ?? "-"}</h4>
+            <p><strong>Status:</strong> <span class="booking-pill ${room.booking_status === "available" ? "available" : "booked"}">${room.booking_status ?? "available"}</span></p>
+            <p><strong>Booked By:</strong> ${room.booked_by ?? "-"}</p>
+            <p><strong>Booking Dates:</strong> ${room.booking_start_date ? `${room.booking_start_date} to ${room.booking_end_date}` : "-"}</p>
+            <p><strong>Windows:</strong> ${room.num_windows ?? "-"}</p>
+            <p><strong>Renovated:</strong> ${room.year_of_last_renovation ?? "-"}</p>
+            <p><strong>Access:</strong> ${room.acces_type ?? "-"}</p>
+            <p><strong>Nightly Price:</strong> $${room.price_per_night ?? "-"}</p>
+          </article>
+        `).join("")}</div>`
+      : "<p class='mgr-empty-state'>No rooms added for this hotel yet.</p>";
+
+    return `
+      <section class="mgr-hotel-card">
+        <div class="mgr-hotel-card-head">
+          <h3>${hotel.name ?? `Hotel ${hotel.hotel_id}`}</h3>
+          <span class="mgr-hotel-chip">Hotel ID: ${hotel.hotel_id}</span>
+        </div>
+        <p class="mgr-hotel-address">${hotel.street_number ?? ""} ${hotel.street_name ?? ""}, ${hotel.city ?? ""}</p>
+        ${roomsMarkup}
+      </section>
+    `;
+  }).join("");
+}
+
+async function loadMyHotelsView() {
+  const managerSSN = ensureManagerSession();
+  if (!managerSSN) return;
+
+  const listEl = document.getElementById("mgrMyHotelsList");
+  if (!listEl) return;
+
+  listEl.innerHTML = "<p class='mgr-empty-state'>Loading your hotels...</p>";
+
+  try {
+    const response = await fetch(`/api/managers/${encodeURIComponent(managerSSN)}/hotels-with-rooms`);
+    const payload = await response.json();
+
+    if (!response.ok || !payload?.success) {
+      throw new Error(payload?.message || "Request failed");
+    }
+
+    const hotels = Array.isArray(payload?.data) ? payload.data : [];
+    listEl.innerHTML = createMyHotelsMarkup(hotels);
+  } catch (error) {
+    listEl.innerHTML = "<p class='mgr-empty-state'>Failed to load your hotels right now.</p>";
+    renderOutput({ message: "Failed to load My Hotels", error: error.message }, true);
+  }
 }
 
 async function loadDashboardOverview() {
@@ -363,6 +499,10 @@ async function addHotel(event) {
       city:         getValue("addHotelCity"),
     }),
   });
+
+  if (document.getElementById("mgrTab-my-hotels")?.classList.contains("active")) {
+    loadMyHotelsView();
+  }
 }
 
 async function updateHotel(event) {
@@ -378,12 +518,20 @@ async function updateHotel(event) {
       city:         getValue("updateHotelCity")      || undefined,
     }),
   });
+
+  if (document.getElementById("mgrTab-my-hotels")?.classList.contains("active")) {
+    loadMyHotelsView();
+  }
 }
 
 async function deleteHotel(event) {
   event.preventDefault();
   if (!ensureManagerSession()) return;
   await apiRequest(`/api/hotels/${getValue("deleteHotelId")}`, { method: "DELETE" });
+
+  if (document.getElementById("mgrTab-my-hotels")?.classList.contains("active")) {
+    loadMyHotelsView();
+  }
 }
 
 async function addRoom(event) {
@@ -397,8 +545,13 @@ async function addRoom(event) {
       numWindows:           getValue("addRoomWindows")     ? Number(getValue("addRoomWindows"))     : undefined,
       yearOfLastRenovation: getValue("addRoomRenovation")  ? Number(getValue("addRoomRenovation"))  : undefined,
       accesType:            getValue("addRoomAccessType")  || undefined,
+      pricePerNight:        getValue("addRoomPricePerNight") ? Number(getValue("addRoomPricePerNight")) : undefined,
     }),
   });
+
+  if (document.getElementById("mgrTab-my-hotels")?.classList.contains("active")) {
+    loadMyHotelsView();
+  }
 }
 
 async function updateRoom(event) {
@@ -411,14 +564,23 @@ async function updateRoom(event) {
       numWindows:           getValue("updateRoomWindows")    ? Number(getValue("updateRoomWindows"))    : undefined,
       yearOfLastRenovation: getValue("updateRoomRenovation") ? Number(getValue("updateRoomRenovation")) : undefined,
       accesType:            getValue("updateRoomAccessType") || undefined,
+      pricePerNight:        getValue("updateRoomPricePerNight") ? Number(getValue("updateRoomPricePerNight")) : undefined,
     }),
   });
+
+  if (document.getElementById("mgrTab-my-hotels")?.classList.contains("active")) {
+    loadMyHotelsView();
+  }
 }
 
 async function deleteRoom(event) {
   event.preventDefault();
   if (!ensureManagerSession()) return;
   await apiRequest(`/api/rooms/${getValue("deleteRoomHotelId")}/${getValue("deleteRoomNumber")}`, { method: "DELETE" });
+
+  if (document.getElementById("mgrTab-my-hotels")?.classList.contains("active")) {
+    loadMyHotelsView();
+  }
 }
 
 async function deleteClient(event) {
@@ -431,17 +593,19 @@ async function deleteClient(event) {
 async function runTopClientsReport() {
   if (!ensureManagerSession()) return;
   await apiRequest(`/api/reports/top-clients?k=${encodeURIComponent(getValue("topClientsK") || "5")}`);
+  focusReportOutput();
 }
-async function runRoomBookingsReport()  { if (!ensureManagerSession()) return; await apiRequest("/api/reports/room-bookings"); }
-async function runHotelStatsReport()    { if (!ensureManagerSession()) return; await apiRequest("/api/reports/hotel-stats"); }
-async function runProblemHotelsReport() { if (!ensureManagerSession()) return; await apiRequest("/api/reports/problem-hotels"); }
-async function runClientSpendingReport(){ if (!ensureManagerSession()) return; await apiRequest("/api/reports/client-spending"); }
+async function runRoomBookingsReport()  { if (!ensureManagerSession()) return; await apiRequest("/api/reports/room-bookings"); focusReportOutput(); }
+async function runHotelStatsReport()    { if (!ensureManagerSession()) return; await apiRequest("/api/reports/hotel-stats"); focusReportOutput(); }
+async function runProblemHotelsReport() { if (!ensureManagerSession()) return; await apiRequest("/api/reports/problem-hotels"); focusReportOutput(); }
+async function runClientSpendingReport(){ if (!ensureManagerSession()) return; await apiRequest("/api/reports/client-spending"); focusReportOutput(); }
 
 async function runClientsByCitiesReport() {
   if (!ensureManagerSession()) return;
   const c1 = getValue("clientsCity1");
   const c2 = getValue("clientsCity2");
   await apiRequest(`/api/reports/clients-by-cities?c1=${encodeURIComponent(c1)}&c2=${encodeURIComponent(c2)}`);
+  focusReportOutput();
 }
 
 /* ============================================================
@@ -490,11 +654,10 @@ async function loadClientOverview() {
   // Find this client's total spend
   const mySpend = spending.find((r) => String(r.client_id) === String(clientId) || String(r.email) === String(clientId));
   document.getElementById("cliStatSpent").textContent = mySpend
-    ? `$${Number(mySpend.total_spent ?? mySpend.total ?? 0).toFixed(0)}`
+    ? `$${Number(mySpend.total_spending ?? mySpend.total_spent ?? mySpend.total ?? 0).toFixed(0)}`
     : "$0";
 
-  // Reviews are not tracked separately — show bookings as proxy
-  document.getElementById("cliStatReviews").textContent = "—";
+  document.getElementById("cliStatReviews").textContent = String(getClientReviewCount(clientId));
 
   // Preview table
   const previewEl = document.getElementById("cliBookingsPreview");
@@ -510,8 +673,16 @@ async function searchAvailableRooms(event) {
   event.preventDefault();
   if (!ensureClientSession()) return;
   const params = new URLSearchParams({ start: getValue("searchStartDate"), end: getValue("searchEndDate") });
-  const hotelId = getValue("searchHotelId");
-  if (hotelId) params.set("hotelId", hotelId);
+  const hotelIdRaw = getValue("searchHotelId");
+  const maxPriceRaw = getValue("searchMaxPrice");
+  const hotelId = Number(hotelIdRaw);
+  const maxPrice = Number(maxPriceRaw);
+  if (hotelIdRaw && Number.isInteger(hotelId) && hotelId > 0) {
+    params.set("hotelId", String(hotelId));
+  }
+  if (maxPriceRaw && Number.isFinite(maxPrice) && maxPrice > 0) {
+    params.set("maxPrice", String(maxPrice));
+  }
   await apiRequest(`/api/rooms/available?${params.toString()}`);
 }
 
@@ -527,7 +698,6 @@ async function bookRoom(event) {
       roomNumber:  Number(getValue("bookRoomNumber")),
       startDate:   getValue("bookStartDate"),
       endDate:     getValue("bookEndDate"),
-      pricePerDay: Number(getValue("bookPricePerDay")),
     }),
   });
 }
@@ -543,7 +713,6 @@ async function autoBookRoom(event) {
       hotelId:     Number(getValue("autoBookHotelId")),
       startDate:   getValue("autoBookStartDate"),
       endDate:     getValue("autoBookEndDate"),
-      pricePerDay: Number(getValue("autoBookPricePerDay")),
     }),
   });
 }
@@ -551,14 +720,44 @@ async function autoBookRoom(event) {
 async function viewMyBookings() {
   const clientId = ensureClientSession();
   if (!clientId) return;
-  await apiRequest(`/api/clients/${encodeURIComponent(clientId)}/bookings`);
+  const payload = await apiRequest(`/api/clients/${encodeURIComponent(clientId)}/bookings`);
+  const outputEl = document.getElementById("bookingsOutput");
+  const rows = Array.isArray(payload?.data) ? payload.data : [];
+
+  if (!outputEl) return;
+  if (!rows.length) {
+    outputEl.innerHTML = "<p style='color:#64618c;font-size:0.9rem'>No bookings yet.</p>";
+    return;
+  }
+
+  outputEl.innerHTML = rows.map((row) => `
+    <article class="mgr-room-item" style="margin-bottom:0.75rem;">
+      <h4>Booking #${row.booking_id}</h4>
+      <p><strong>Hotel:</strong> ${row.hotel_name ?? row.hotel_id} | <strong>Room:</strong> ${row.room_number}</p>
+      <p><strong>Dates:</strong> ${row.start_date} to ${row.end_date}</p>
+      <p><strong>Booked By:</strong> ${row.client_email}</p>
+      <button type="button" class="cli-action-btn" onclick="cancelBooking(${row.booking_id})">Cancel Booking</button>
+    </article>
+  `).join("");
+}
+
+async function cancelBooking(bookingId) {
+  const clientId = ensureClientSession();
+  if (!clientId) return;
+
+  await apiRequest(`/api/bookings/${bookingId}`, {
+    method: "DELETE",
+    body: JSON.stringify({ clientId }),
+  });
+
+  viewMyBookings();
 }
 
 async function submitReview(event) {
   event.preventDefault();
   const clientId = ensureClientSession();
   if (!clientId) return;
-  await apiRequest("/api/reviews", {
+  const payload = await apiRequest("/api/reviews", {
     method: "POST",
     body: JSON.stringify({
       clientId,
@@ -567,6 +766,11 @@ async function submitReview(event) {
       message: getValue("reviewMessage"),
     }),
   });
+
+  if (payload?.success) {
+    incrementClientReviewCount(clientId);
+    loadClientOverview();
+  }
 }
 
 async function updateClientProfile() {
@@ -629,6 +833,7 @@ window.loginClient           = loginClient;
 window.logoutClient          = logoutClient;
 window.mgrShowTab            = mgrShowTab;
 window.loadDashboardOverview = loadDashboardOverview;
+window.loadMyHotelsView      = loadMyHotelsView;
 window.addHotel              = addHotel;
 window.updateHotel           = updateHotel;
 window.deleteHotel           = deleteHotel;
@@ -648,6 +853,7 @@ window.searchAvailableRooms  = searchAvailableRooms;
 window.bookRoom              = bookRoom;
 window.autoBookRoom          = autoBookRoom;
 window.viewMyBookings        = viewMyBookings;
+window.cancelBooking         = cancelBooking;
 window.submitReview          = submitReview;
 window.updateClient          = updateClient;
 window.updateClientProfile   = updateClientProfile;

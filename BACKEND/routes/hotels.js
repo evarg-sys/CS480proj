@@ -7,6 +7,15 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   try {
+    const { managerSsn } = req.query;
+    const values = [];
+    let managerFilter = "";
+
+    if (managerSsn) {
+      values.push(managerSsn);
+      managerFilter = `WHERE h.manager_ssn = $${values.length}`;
+    }
+
     const result = await pool.query(`
       SELECT h.hotel_id,
              h.name,
@@ -16,8 +25,9 @@ router.get("/", async (req, res) => {
              a.city
       FROM Hotel h
       LEFT JOIN Address a ON a.address_id = h.address_id
+      ${managerFilter}
       ORDER BY h.hotel_id ASC
-    `);
+    `, values);
 
     return sendSuccess(res, 200, "Hotels retrieved", result.rows);
   } catch (error) {

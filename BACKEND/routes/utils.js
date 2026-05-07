@@ -62,12 +62,13 @@ const createAddress = async (db, streetName, streetNumber, city) => {
 const getRoomConflict = async (db, hotelId, roomNumber, startDate, endDate) => {
   const result = await db.query(
     `
-      SELECT booking_id
+      SELECT booking_id, client_email, start_date, end_date
       FROM Booking
       WHERE hotel_id = $1
         AND room_number = $2
         AND start_date <= $4::date
         AND end_date >= $3::date
+      ORDER BY start_date ASC
       LIMIT 1
     `,
     [hotelId, roomNumber, startDate, endDate]
@@ -79,7 +80,12 @@ const getRoomConflict = async (db, hotelId, roomNumber, startDate, endDate) => {
 const getAvailableRoomInHotel = async (db, hotelId, startDate, endDate) => {
   const result = await db.query(
     `
-      SELECT r.hotel_id, r.room_number, r.num_windows, r.year_of_last_renovation, r.acces_type
+      SELECT r.hotel_id,
+             r.room_number,
+             r.num_windows,
+             r.year_of_last_renovation,
+             r.acces_type,
+             r.price_per_night
       FROM Room r
       WHERE r.hotel_id = $1
         AND NOT EXISTS (

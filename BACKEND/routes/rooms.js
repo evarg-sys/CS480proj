@@ -7,7 +7,7 @@ const router = express.Router();
 
 router.get("/available", async (req, res) => {
   try {
-    const { start, end, hotelId } = req.query;
+    const { start, end, hotelId, maxPrice } = req.query;
 
     if (!isValidDateRange(start, end)) {
       return sendError(res, 400, "Valid start and end dates are required, and end must be after start");
@@ -15,10 +15,18 @@ router.get("/available", async (req, res) => {
 
     const values = [start, end];
     let hotelFilter = "";
+    let priceFilter = "";
 
-    if (hotelId) {
-      values.push(hotelId);
+    const parsedHotelId = Number.parseInt(hotelId, 10);
+    if (Number.isInteger(parsedHotelId) && parsedHotelId > 0) {
+      values.push(parsedHotelId);
       hotelFilter = ` AND r.hotel_id = $${values.length}`;
+    }
+
+    const parsedMaxPrice = Number.parseFloat(maxPrice);
+    if (Number.isFinite(parsedMaxPrice) && parsedMaxPrice > 0) {
+      values.push(parsedMaxPrice);
+      priceFilter = ` AND r.price_per_night <= $${values.length}`;
     }
 
     const result = await pool.query(
@@ -29,7 +37,8 @@ router.get("/available", async (req, res) => {
                r.room_number,
                r.num_windows,
                r.year_of_last_renovation,
-               r.acces_type
+               r.acces_type,
+               r.price_per_night
         FROM Room r
         JOIN Hotel h ON h.hotel_id = r.hotel_id
         LEFT JOIN Address a ON a.address_id = h.address_id
@@ -42,6 +51,7 @@ router.get("/available", async (req, res) => {
             AND b.end_date >= $1::date
         )
         ${hotelFilter}
+        ${priceFilter}
         ORDER BY r.hotel_id ASC, r.room_number ASC
       `,
       values
@@ -62,7 +72,8 @@ router.get("/", async (req, res) => {
              r.room_number,
              r.num_windows,
              r.year_of_last_renovation,
-             r.acces_type
+                  r.acces_type,
+                  r.price_per_night
       FROM Room r
       JOIN Hotel h ON h.hotel_id = r.hotel_id
       LEFT JOIN Address a ON a.address_id = h.address_id
@@ -77,24 +88,35 @@ router.get("/", async (req, res) => {
 
 router.post("/", async (req, res) => {
   try {
-    const { hotelId, roomNumber, numWindows, yearOfLastRenovation, accesType } = req.body;
+    const { hotelId, roomNumber, numWindows, yearOfLastRenovation, accesType, pricePerNight } = req.body;
 
-    if (!hotelId || roomNumber === undefined || roomNumber === null) {
-      return sendError(res, 400, "hotelId and roomNumber are required");
+    if (!hotelId || roomNumber === undefined || roomNumber === null || pricePerNight === undefined || pricePerNight === null) {
+      return sendError(res, 400, "hotelId, roomNumber, and pricePerNight are required");
+    }
+
+    const normalizedAccess = String(accesType || "").trim().toLowerCase();
+    if (!["elevator", "stairs"].includes(normalizedAccess)) {
+      return sendError(res, 400, "accesType must be either 'elevator' or 'stairs'");
+    }
+
+    const parsedPricePerNight = Number.parseFloat(pricePerNight);
+    if (!Number.isFinite(parsedPricePerNight) || parsedPricePerNight <= 0) {
+      return sendError(res, 400, "pricePerNight must be a positive number");
     }
 
     const result = await pool.query(
       `
-        INSERT INTO Room (hotel_id, room_number, num_windows, year_of_last_renovation, acces_type)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING hotel_id, room_number, num_windows, year_of_last_renovation, acces_type
+        INSERT INTO Room (hotel_id, room_number, num_windows, year_of_last_renovation, acces_type, price_per_night)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING hotel_id, room_number, num_windows, year_of_last_renovation, acces_type, price_per_night
       `,
       [
         hotelId,
         roomNumber,
         numWindows ?? null,
         yearOfLastRenovation ?? null,
-        accesType ?? null,
+        normalizedAccess,
+        parsedPricePerNight,
       ]
     );
 
@@ -107,7 +129,23 @@ router.post("/", async (req, res) => {
 router.put("/:hotelId/:roomNumber", async (req, res) => {
   try {
     const { hotelId, roomNumber } = req.params;
-    const { newRoomNumber, numWindows, yearOfLastRenovation, accesType } = req.body;
+    const { newRoomNumber, numWindows, yearOfLastRenovation, accesType, pricePerNight } = req.body;
+
+    let normalizedAccess = null;
+    if (typeof accesType !== "undefined") {
+      normalizedAccess = String(accesType || "").trim().toLowerCase();
+      if (!["elevator", "stairs"].includes(normalizedAccess)) {
+        return sendError(res, 400, "accesType must be either 'elevator' or 'stairs'");
+      }
+    }
+
+    let parsedPricePerNight = null;
+    if (typeof pricePerNight !== "undefined") {
+      parsedPricePerNight = Number.parseFloat(pricePerNight);
+      if (!Number.isFinite(parsedPricePerNight) || parsedPricePerNight <= 0) {
+        return sendError(res, 400, "pricePerNight must be a positive number");
+      }
+    }
 
     const result = await pool.query(
       `
@@ -115,16 +153,18 @@ router.put("/:hotelId/:roomNumber", async (req, res) => {
         SET room_number = COALESCE($1, room_number),
             num_windows = COALESCE($2, num_windows),
             year_of_last_renovation = COALESCE($3, year_of_last_renovation),
-            acces_type = COALESCE($4, acces_type)
-        WHERE hotel_id = $5
-          AND room_number = $6
-        RETURNING hotel_id, room_number, num_windows, year_of_last_renovation, acces_type
+            acces_type = COALESCE($4, acces_type),
+            price_per_night = COALESCE($5, price_per_night)
+        WHERE hotel_id = $6
+          AND room_number = $7
+        RETURNING hotel_id, room_number, num_windows, year_of_last_renovation, acces_type, price_per_night
       `,
       [
         newRoomNumber ?? null,
         numWindows ?? null,
         yearOfLastRenovation ?? null,
-        accesType ?? null,
+        normalizedAccess,
+        parsedPricePerNight,
         hotelId,
         roomNumber,
       ]

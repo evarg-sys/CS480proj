@@ -24,13 +24,14 @@ router.post("/", async (req, res) => {
         FROM Booking
         WHERE client_email = $1
           AND hotel_id = $2
+          AND end_date < CURRENT_DATE
         LIMIT 1
       `,
       [clientId, hotelId]
     );
 
     if (bookingCheck.rows.length === 0) {
-      return sendError(res, 403, "A client can review a hotel only after booking it");
+      return sendError(res, 403, "A client can review a hotel only after previously staying there");
     }
 
     const result = await pool.query(

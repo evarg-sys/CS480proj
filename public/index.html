@@ -22,30 +22,6 @@
           <p class="auth-brand-tagline">The complete hotel management platform</p>
         </div>
 
-        <div class="auth-float-cards">
-          <div class="auth-float-card" style="--fi:0">
-            <span class="afc-icon">🏨</span>
-            <div>
-              <strong>Grand Palace</strong>
-              <small>4.8 ★ · 32 rooms available</small>
-            </div>
-          </div>
-          <div class="auth-float-card" style="--fi:1">
-            <span class="afc-icon">📅</span>
-            <div>
-              <strong>12 bookings today</strong>
-              <small>↑ 15% from yesterday</small>
-            </div>
-          </div>
-          <div class="auth-float-card" style="--fi:2">
-            <span class="afc-icon">⭐</span>
-            <div>
-              <strong>Ocean View Suite</strong>
-              <small>Top rated this month</small>
-            </div>
-          </div>
-        </div>
-
         <div class="auth-bg-orbs">
           <div class="orb orb-1"></div>
           <div class="orb orb-2"></div>
@@ -206,6 +182,7 @@
         <ul class="mgr-nav">
           <li><button class="mgr-nav-btn active" onclick="mgrShowTab('overview')"><span class="nav-icon">📊</span> Overview</button></li>
           <li><button class="mgr-nav-btn" onclick="mgrShowTab('hotels')"><span class="nav-icon">🏩</span> Hotels</button></li>
+          <li><button class="mgr-nav-btn" onclick="mgrShowTab('my-hotels')"><span class="nav-icon">🧾</span> My Hotels</button></li>
           <li><button class="mgr-nav-btn" onclick="mgrShowTab('rooms')"><span class="nav-icon">🛏</span> Rooms</button></li>
           <li><button class="mgr-nav-btn" onclick="mgrShowTab('clients')"><span class="nav-icon">👥</span> Clients</button></li>
           <li><button class="mgr-nav-btn" onclick="mgrShowTab('reports')"><span class="nav-icon">📋</span> Reports</button></li>
@@ -333,6 +310,18 @@
           </div>
         </div>
 
+        <!-- Tab: My Hotels -->
+        <div id="mgrTab-my-hotels" class="mgr-tab">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; gap:0.75rem; flex-wrap:wrap;">
+            <h2 class="mgr-tab-title" style="margin:0;">My Hotels</h2>
+            <button type="button" class="mgr-action-btn" onclick="loadMyHotelsView()">↻ Refresh My Hotels</button>
+          </div>
+          <p style="margin:0 0 1.25rem; color:var(--mgr-muted); font-size:0.92rem;">
+            Shows hotels assigned to your manager account and all rooms in each hotel.
+          </p>
+          <div id="mgrMyHotelsList" class="mgr-my-hotels-list"></div>
+        </div>
+
         <!-- Tab: Rooms -->
         <div id="mgrTab-rooms" class="mgr-tab">
           <h2 class="mgr-tab-title">Rooms</h2>
@@ -344,7 +333,14 @@
                 <label>Room Number <input id="addRoomNumber" type="number" placeholder="101" required /></label>
                 <label>Windows <input id="addRoomWindows" type="number" placeholder="2" /></label>
                 <label>Year Renovated <input id="addRoomRenovation" type="number" placeholder="2022" /></label>
-                <label>Access Type <input id="addRoomAccessType" placeholder="key card" /></label>
+                <label>Access Type
+                  <select id="addRoomAccessType" required>
+                    <option value="">Select access type</option>
+                    <option value="elevator">elevator</option>
+                    <option value="stairs">stairs</option>
+                  </select>
+                </label>
+                <label>Nightly Price ($) <input id="addRoomPricePerNight" type="number" step="0.01" min="0.01" placeholder="150.00" required /></label>
                 <button type="submit">Add Room</button>
               </form>
             </div>
@@ -356,7 +352,14 @@
                 <label>New Number <input id="updateRoomNewNumber" type="number" placeholder="Optional" /></label>
                 <label>Windows <input id="updateRoomWindows" type="number" placeholder="Optional" /></label>
                 <label>Year Renovated <input id="updateRoomRenovation" type="number" placeholder="Optional" /></label>
-                <label>Access Type <input id="updateRoomAccessType" placeholder="Optional" /></label>
+                <label>Access Type
+                  <select id="updateRoomAccessType">
+                    <option value="">Optional</option>
+                    <option value="elevator">elevator</option>
+                    <option value="stairs">stairs</option>
+                  </select>
+                </label>
+                <label>Nightly Price ($) <input id="updateRoomPricePerNight" type="number" step="0.01" min="0.01" placeholder="Optional" /></label>
                 <button type="submit">Update Room</button>
               </form>
             </div>
@@ -388,6 +391,13 @@
         <!-- Tab: Reports -->
         <div id="mgrTab-reports" class="mgr-tab">
           <h2 class="mgr-tab-title">Reports</h2>
+          <div class="mgr-output-card" style="margin-bottom:1.25rem;">
+            <div class="mgr-output-header">
+              <h3>Report Output</h3>
+              <button class="mgr-action-btn" onclick="clearOutput()">Clear</button>
+            </div>
+            <div id="reportOutput" class="output"></div>
+          </div>
           <div class="mgr-form-grid">
             <div class="mgr-form-card" style="--fi:0">
               <h3>Top-K Clients</h3>
@@ -420,13 +430,6 @@
               <h3>Client Spending</h3>
               <button type="button" onclick="runClientSpendingReport()">Run Report</button>
             </div>
-          </div>
-          <div class="mgr-output-card" style="margin-top:1.5rem;">
-            <div class="mgr-output-header">
-              <h3>Report Output</h3>
-              <button class="mgr-action-btn" onclick="clearOutput()">Clear</button>
-            </div>
-            <div id="reportOutput" class="output"></div>
           </div>
         </div>
 
@@ -551,6 +554,7 @@
                 <label>Check-in Date <input id="searchStartDate" type="date" required /></label>
                 <label>Check-out Date <input id="searchEndDate" type="date" required /></label>
                 <label>Hotel ID (optional) <input id="searchHotelId" type="number" placeholder="Leave blank for all hotels" /></label>
+                <label>Max Price per Night ($) <input id="searchMaxPrice" type="number" step="0.01" min="0.01" placeholder="Optional" /></label>
                 <button type="submit">Search Rooms</button>
               </form>
             </div>
@@ -575,7 +579,6 @@
                 <label>Room Number <input id="bookRoomNumber" type="number" placeholder="101" required /></label>
                 <label>Check-in Date <input id="bookStartDate" type="date" required /></label>
                 <label>Check-out Date <input id="bookEndDate" type="date" required /></label>
-                <label>Price per Day ($) <input id="bookPricePerDay" type="number" step="0.01" placeholder="150.00" required /></label>
                 <button type="submit">Book Room</button>
               </form>
             </div>
@@ -586,7 +589,6 @@
                 <label>Preferred Hotel ID <input id="autoBookHotelId" type="number" placeholder="1" required /></label>
                 <label>Check-in Date <input id="autoBookStartDate" type="date" required /></label>
                 <label>Check-out Date <input id="autoBookEndDate" type="date" required /></label>
-                <label>Price per Day ($) <input id="autoBookPricePerDay" type="number" step="0.01" placeholder="150.00" required /></label>
                 <button type="submit">Auto-Book</button>
               </form>
             </div>

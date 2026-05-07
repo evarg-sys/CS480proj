@@ -58,12 +58,14 @@ router.get("/hotel-stats", async (req, res) => {
   try {
     const result = await pool.query(`
       SELECT h.hotel_id,
-             h.name,
+             h.name AS hotel_name,
              a.city,
+             COUNT(DISTINCT r.room_number)::int AS total_rooms,
              COUNT(DISTINCT b.booking_id)::int AS total_bookings,
              COALESCE(ROUND(AVG(rv.rating)::numeric, 2), 0) AS average_rating
       FROM Hotel h
       LEFT JOIN Address a ON a.address_id = h.address_id
+      LEFT JOIN Room r ON r.hotel_id = h.hotel_id
       LEFT JOIN Booking b ON b.hotel_id = h.hotel_id
       LEFT JOIN Review rv ON rv.hotel_id = h.hotel_id
       GROUP BY h.hotel_id, h.name, a.city
